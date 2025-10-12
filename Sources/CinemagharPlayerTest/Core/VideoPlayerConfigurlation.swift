@@ -17,9 +17,10 @@ public class VideoPlayerConfiguration {
     public var controlsTimeout: TimeInterval = 3.0
     
     // API Configuration
-    public var apiEndpoint: String = ""
-    public var apiHeaders: [String: String] = [:]
-    public var requestTimeout: TimeInterval = 30.0
+    public var authToken: String = ""
+    public var contentTitle: String = ""
+    public var userUniqueId: String = ""
+    public var contentId: Int = -1
     
     // Intro Screen Configuration
     public var introBackgroundColor: UIColor = .black

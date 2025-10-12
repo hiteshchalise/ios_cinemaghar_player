@@ -7,6 +7,7 @@
 
 import UIKit
 
+@MainActor
 protocol IntroViewControllerDelegate: AnyObject {
     func introViewControllerDidRequestDismiss(_ controller: IntroViewController)
 }

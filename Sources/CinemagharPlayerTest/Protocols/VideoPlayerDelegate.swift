@@ -8,6 +8,7 @@
 import Foundation
 import AVFoundation
 
+@MainActor
 public protocol VideoPlayerDelegate: AnyObject {
     // API Events
     func videoPlayerDidStartLoading(_ sdk: VideoPlayerSDK)

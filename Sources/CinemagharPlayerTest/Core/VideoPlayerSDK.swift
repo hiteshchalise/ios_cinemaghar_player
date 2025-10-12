@@ -7,6 +7,7 @@
 
 import UIKit
 
+@MainActor
 public class VideoPlayerSDK {
     
     // MARK: - Properties
@@ -55,20 +56,22 @@ public class VideoPlayerSDK {
             headers: configuration.apiHeaders,
             timeout: configuration.requestTimeout
         ) { [weak self] result in
-            guard let self = self else { return }
-            
-            switch result {
-            case .success(let response):
-                if let videoURLString = response.isBoughtData?.videoUrl,
-                   let videoURL = URL(string: videoURLString) {
-                    self.delegate?.videoPlayer(self, didReceiveVideoURL: videoURL)
-                    self.navigateToPlayer(with: videoURL, response: response)
-                } else {
-                    self.delegate?.videoPlayer(self, didFailToLoadWithError: .noVideoURLInResponse)
-                }
+            Task {@MainActor in
+                guard let self = self else { return }
                 
-            case .failure(let error):
-                self.delegate?.videoPlayer(self, didFailToLoadWithError: error)
+                switch result {
+                case .success(let response):
+                    if let videoURLString = response.isBoughtData?.videoUrl,
+                       let videoURL = URL(string: videoURLString) {
+                        self.delegate?.videoPlayer(self, didReceiveVideoURL: videoURL)
+                        self.navigateToPlayer(with: videoURL, response: response)
+                    } else {
+                        self.delegate?.videoPlayer(self, didFailToLoadWithError: .noVideoURLInResponse)
+                    }
+                    
+                case .failure(let error):
+                    self.delegate?.videoPlayer(self, didFailToLoadWithError: error)
+                }
             }
         }
     }

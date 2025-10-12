@@ -8,6 +8,7 @@
 import UIKit
 import AVFoundation
 
+@MainActor
 protocol VideoPlayerViewControllerDelegate: AnyObject {
     func videoPlayerViewControllerDidRequestDismiss(_ controller: VideoPlayerViewController)
     func videoPlayerViewController(_ controller: VideoPlayerViewController, didChangeState state: VideoPlayerState)
@@ -16,6 +17,7 @@ protocol VideoPlayerViewControllerDelegate: AnyObject {
     func videoPlayerViewControllerDidFinishPlaying(_ controller: VideoPlayerViewController)
 }
 
+@MainActor
 internal class VideoPlayerViewController: UIViewController {
     
     // MARK: - Properties
