@@ -9,7 +9,7 @@ import Foundation
 import AVFoundation
 
 @MainActor
-public protocol VideoPlayerDelegate: AnyObject {
+protocol VideoPlayerDelegate: AnyObject {
     // API Events
     func videoPlayerDidStartLoading(_ sdk: VideoPlayerSDK)
     func videoPlayer(_ sdk: VideoPlayerSDK, didFailToLoadWithError error: VideoPlayerError)
@@ -26,7 +26,7 @@ public protocol VideoPlayerDelegate: AnyObject {
 }
 
 // Make some methods optional
-public extension VideoPlayerDelegate {
+extension VideoPlayerDelegate {
     func videoPlayerDidStartLoading(_ sdk: VideoPlayerSDK) {}
     func videoPlayer(_ sdk: VideoPlayerSDK, didReceiveVideoURL url: URL) {}
     func videoPlayer(_ player: VideoPlayerView, didUpdateProgress currentTime: TimeInterval, totalTime: TimeInterval) {}

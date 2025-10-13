@@ -11,7 +11,7 @@ import UIKit
 public class VideoPlayerSDK {
     
     // MARK: - Properties
-    public weak var delegate: VideoPlayerDelegate?
+    weak var delegate: VideoPlayerDelegate?
     public let configuration: VideoPlayerConfiguration
     
     private var navigationController: UINavigationController?
