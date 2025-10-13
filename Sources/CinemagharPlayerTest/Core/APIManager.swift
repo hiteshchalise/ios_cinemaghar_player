@@ -93,6 +93,7 @@ internal final class APIManager {
         // Validate HTTP response
         guard let httpResponse = response as? HTTPURLResponse else {
             throw VideoPlayerError.invalidAPIResponse
+            
         }
             
         // Handle HTTP status codes
