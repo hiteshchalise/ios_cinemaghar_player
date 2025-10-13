@@ -21,6 +21,8 @@ public class VideoPlayerConfiguration {
     public var contentTitle: String = ""
     public var userUniqueId: String = ""
     public var contentId: Int = -1
+    public var deviceId: String = ""
+    public var deviceName: String = ""
     
     // Intro Screen Configuration
     public var introBackgroundColor: UIColor = .black

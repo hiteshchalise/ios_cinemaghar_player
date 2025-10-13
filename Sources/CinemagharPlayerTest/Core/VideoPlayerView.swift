@@ -6,8 +6,8 @@
 //
 import UIKit
 import AVFoundation
-import AVKit
 
+@MainActor
 public class VideoPlayerView: UIView {
     
     // MARK: - Public Properties
@@ -97,12 +97,16 @@ public class VideoPlayerView: UIView {
         // Time observer
         let interval = CMTime(seconds: 0.5, preferredTimescale: 600)
         timeObserver = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
-            guard let self = self, let player = self.player else { return }
+            guard let self = self else { return }
             
-            let currentTime = time.seconds
-            let totalTime = player.currentItem?.duration.seconds ?? 0
-            
-            self.delegate?.videoPlayer(self, didUpdateProgress: currentTime, totalTime: totalTime)
+            Task { @MainActor [weak self] in
+                guard let self = self, let player = self.player else { return }
+                
+                let currentTime = time.seconds
+                let totalTime = player.currentItem?.duration.seconds ?? 0
+                
+                self.delegate?.videoPlayer(self, didUpdateProgress: currentTime, totalTime: totalTime)
+            }
         }
         
         // Status observer
@@ -122,29 +126,35 @@ public class VideoPlayerView: UIView {
         delegate?.videoPlayerDidFinishPlaying(self)
     }
     
-    public override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+    nonisolated public override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
         if keyPath == "status" {
             guard let playerItem = object as? AVPlayerItem else { return }
             
-            switch playerItem.status {
-            case .readyToPlay:
-                state = .ready
-            case .failed:
-                if let error = playerItem.error {
-                    delegate?.videoPlayer(self, didEncounterError: .playbackError(error))
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                
+                switch playerItem.status {
+                case .readyToPlay:
+                    self.state = .ready
+                case .failed:
+                    if let error = playerItem.error {
+                        self.delegate?.videoPlayer(self, didEncounterError: .playbackError(error))
+                    }
+                    self.state = .error
+                default:
+                    break
                 }
-                state = .error
-            default:
-                break
             }
         }
     }
     
     deinit {
-        if let timeObserver = timeObserver {
-            player?.removeTimeObserver(timeObserver)
+        MainActor.assumeIsolated {
+            if let timeObserver = timeObserver {
+                player?.removeTimeObserver(timeObserver)
+            }
+            player?.currentItem?.removeObserver(self, forKeyPath: "status")
         }
-        player?.currentItem?.removeObserver(self, forKeyPath: "status")
         NotificationCenter.default.removeObserver(self)
     }
 }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct APIResponse: Codable {
+public struct APIResponse: Codable, Sendable {
     let status: Bool?
     let message: String?
     let isBoughtData: IsBoughtData?
@@ -16,6 +16,11 @@ public struct APIResponse: Codable {
         case status
         case message
         case isBoughtData = "data" // maps JSON key "data" → isBoughtData
+    }
+    
+    
+    var isValid: Bool {
+        return status == true && isBoughtData?.videoUrl != nil && isBoughtData?.videoUrl != ""
     }
 }
 

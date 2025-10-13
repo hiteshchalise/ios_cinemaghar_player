@@ -14,9 +14,9 @@ public class VideoPlayerSDK {
     public weak var delegate: VideoPlayerDelegate?
     public let configuration: VideoPlayerConfiguration
     
-    private let apiManager = APIManager()
     private var navigationController: UINavigationController?
     private var introViewController: IntroViewController?
+    private var loadTask: Task<Void, Never>?
     
     // MARK: - Initialization
     public init(configuration: VideoPlayerConfiguration) {
@@ -51,29 +51,72 @@ public class VideoPlayerSDK {
     
     // MARK: - Private Methods
     private func loadVideoData() {
-        apiManager.fetchVideoData(
-            from: configuration.apiEndpoint,
-            headers: configuration.apiHeaders,
-            timeout: configuration.requestTimeout
-        ) { [weak self] result in
-            Task {@MainActor in
-                guard let self = self else { return }
+        // Cancel any existing task
+        loadTask?.cancel()
+        
+        loadTask = Task {
+            do {
+                let response = try await APIManager().fetchVideoData(
+                    userUniqueId: configuration.userUniqueId,
+                    contentId: configuration.contentId,
+                    authToken: configuration.authToken,
+                    deviceId: configuration.deviceId,
+                    deviceName: configuration.deviceName
+                )
                 
-                switch result {
-                case .success(let response):
-                    if let videoURLString = response.isBoughtData?.videoUrl,
-                       let videoURL = URL(string: videoURLString) {
-                        self.delegate?.videoPlayer(self, didReceiveVideoURL: videoURL)
-                        self.navigateToPlayer(with: videoURL, response: response)
-                    } else {
-                        self.delegate?.videoPlayer(self, didFailToLoadWithError: .noVideoURLInResponse)
-                    }
-                    
-                case .failure(let error):
-                    self.delegate?.videoPlayer(self, didFailToLoadWithError: error)
+                // Check if task was cancelled
+                try Task.checkCancellation()
+                
+                guard let videoURLString = response.isBoughtData?.videoUrl,
+                      let videoURL = URL(string: videoURLString) else {
+                    notifyError(.invalidResponseData)
+                    return
                 }
+                
+                notifySuccess(videoURL: videoURL, response: response)
+                
+            } catch is CancellationError {
+                // Task was cancelled, don't notify error
+                print("Video load was cancelled")
+            } catch {
+                notifyError(convertError(error))
             }
         }
+    }
+
+    @MainActor
+    private func notifySuccess(videoURL: URL, response: APIResponse) {
+        self.delegate?.videoPlayer(self, didReceiveVideoURL: videoURL)
+        self.navigateToPlayer(with: videoURL, response: response)
+    }
+
+    @MainActor
+    private func notifyError(_ error: VideoPlayerError) {
+        self.delegate?.videoPlayer(self, didFailToLoadWithError: error)
+    }
+
+    private func convertError(_ error: Error) -> VideoPlayerError {
+        if let videoError = error as? VideoPlayerError {
+            return videoError
+        } else if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet, .networkConnectionLost:
+                return .networkError("No internet connection")
+            case .timedOut:
+                return .networkError("Request timed out")
+            case .cancelled:
+                return .networkError("Request cancelled")
+            default:
+                return .networkError(urlError.localizedDescription)
+            }
+        } else {
+            return .networkError(error.localizedDescription)
+        }
+    }
+
+    func cancelLoad() {
+        loadTask?.cancel()
+        loadTask = nil
     }
     
     private func navigateToPlayer(with url: URL, response: APIResponse) {
