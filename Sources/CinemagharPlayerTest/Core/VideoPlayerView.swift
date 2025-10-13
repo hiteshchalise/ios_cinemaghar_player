@@ -11,7 +11,7 @@ import AVFoundation
 public class VideoPlayerView: UIView {
     
     // MARK: - Public Properties
-    public weak var delegate: VideoPlayerDelegate?
+    weak var delegate: VideoPlayerDelegate?
     public var configuration: VideoPlayerConfiguration = VideoPlayerConfiguration()
     
     public private(set) var state: VideoPlayerState = .stopped {
