@@ -10,6 +10,7 @@ import UIKit
 @MainActor
 protocol IntroViewControllerDelegate: AnyObject {
     func introViewControllerDidRequestDismiss(_ controller: IntroViewController)
+    func introViewControllerDidRequestRetry()
 }
 
 // MARK: - IntroViewController
@@ -171,8 +172,6 @@ internal class IntroViewController: UIViewController {
     
     @objc private func retryButtonTapped() {
         print("🔄 Retry button tapped")
-        startLoading()
-        // Notify SDK to retry (you'll need to add this to the delegate)
-        // For now, just show loading state
+        delegate?.introViewControllerDidRequestRetry()
     }
 }

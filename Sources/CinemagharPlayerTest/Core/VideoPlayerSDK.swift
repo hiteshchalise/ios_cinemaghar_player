@@ -165,6 +165,10 @@ extension VideoPlayerSDK: IntroViewControllerDelegate {
         print("   SDK self: \(Unmanaged.passUnretained(self).toOpaque())")
         dismiss()
     }
+    
+    func introViewControllerDidRequestRetry() {
+        loadVideoData()
+    }
 }
 
 // MARK: - VideoPlayerViewControllerDelegate
