@@ -43,8 +43,14 @@ public class VideoPlayerSDK {
     }
     
     public func dismiss(animated: Bool = true) {
+        print("🚪 Dismissing VideoPlayerSDK")
+        
+        // Cancel ongoing API task
+        cancelLoad()
+        
         navigationController?.dismiss(animated: animated) { [weak self] in
             guard let self = self else { return }
+            print("✅ VideoPlayerSDK dismissed")
             self.delegate?.videoPlayerDidDismiss(self)
         }
     }
@@ -88,12 +94,19 @@ public class VideoPlayerSDK {
 
     @MainActor
     private func notifySuccess(videoURL: URL, response: APIResponse) {
+        print("✅ Video loaded successfully, navigating to player")
         self.delegate?.videoPlayer(self, didReceiveVideoURL: videoURL)
         self.navigateToPlayer(with: videoURL, response: response)
     }
 
     @MainActor
     private func notifyError(_ error: VideoPlayerError) {
+        print("❌ Notifying error: \(error)")
+        
+        // Show error in IntroViewController
+        introViewController?.showError(error)
+        
+        // Notify delegate
         self.delegate?.videoPlayer(self, didFailToLoadWithError: error)
     }
 
@@ -117,6 +130,7 @@ public class VideoPlayerSDK {
     }
 
     func cancelLoad() {
+        print("🛑 Cancelling load task")
         loadTask?.cancel()
         loadTask = nil
     }
@@ -143,6 +157,7 @@ extension VideoPlayerSDK: IntroViewControllerDelegate {
 // MARK: - VideoPlayerViewControllerDelegate
 extension VideoPlayerSDK: VideoPlayerViewControllerDelegate {
     func videoPlayerViewControllerDidRequestDismiss(_ controller: VideoPlayerViewController) {
+        print("📱 IntroViewController requested dismiss")
         dismiss()
     }
     

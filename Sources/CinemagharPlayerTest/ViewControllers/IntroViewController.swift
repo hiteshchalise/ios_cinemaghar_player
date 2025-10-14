@@ -12,6 +12,7 @@ protocol IntroViewControllerDelegate: AnyObject {
     func introViewControllerDidRequestDismiss(_ controller: IntroViewController)
 }
 
+// MARK: - IntroViewController
 internal class IntroViewController: UIViewController {
     
     // MARK: - Properties
@@ -39,6 +40,28 @@ internal class IntroViewController: UIViewController {
         return label
     }()
     
+    private lazy var errorLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .systemRed
+        label.textAlignment = .center
+        label.font = UIFont.systemFont(ofSize: 16)
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.isHidden = true
+        return label
+    }()
+    
+    private lazy var retryButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Retry", for: .normal)
+        button.setTitleColor(.systemBlue, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isHidden = true
+        button.addTarget(self, action: #selector(retryButtonTapped), for: .touchUpInside)
+        return button
+    }()
+    
     private lazy var dismissButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("✕", for: .normal)
@@ -47,6 +70,15 @@ internal class IntroViewController: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.addTarget(self, action: #selector(dismissButtonTapped), for: .touchUpInside)
         return button
+    }()
+    
+    private lazy var contentStackView: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 16
+        stack.alignment = .center
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
     }()
     
     // MARK: - Initialization
@@ -70,23 +102,22 @@ internal class IntroViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = configuration.introBackgroundColor
         
-        // Add loading indicator
-        view.addSubview(loadingIndicator)
-        NSLayoutConstraint.activate([
-            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
-        ])
+        // Setup content stack
+        view.addSubview(contentStackView)
         
-        // Add loading label if provided
+        contentStackView.addArrangedSubview(loadingIndicator)
         if let loadingLabel = loadingLabel {
-            view.addSubview(loadingLabel)
-            NSLayoutConstraint.activate([
-                loadingLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-                loadingLabel.topAnchor.constraint(equalTo: loadingIndicator.bottomAnchor, constant: 16),
-                loadingLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
-                loadingLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20)
-            ])
+            contentStackView.addArrangedSubview(loadingLabel)
         }
+        contentStackView.addArrangedSubview(errorLabel)
+        contentStackView.addArrangedSubview(retryButton)
+        
+        NSLayoutConstraint.activate([
+            contentStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            contentStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            contentStackView.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 40),
+            contentStackView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -40)
+        ])
         
         // Add dismiss button
         view.addSubview(dismissButton)
@@ -100,10 +131,33 @@ internal class IntroViewController: UIViewController {
     
     private func startLoading() {
         loadingIndicator.startAnimating()
+        errorLabel.isHidden = true
+        retryButton.isHidden = true
+        loadingLabel?.isHidden = false
+    }
+    
+    // MARK: - Public Methods
+    func showError(_ error: VideoPlayerError) {
+        print("🔴 IntroViewController showing error: \(error)")
+        
+        loadingIndicator.stopAnimating()
+        loadingLabel?.isHidden = true
+        
+        errorLabel.text = error.localizedDescription
+        errorLabel.isHidden = false
+        retryButton.isHidden = false
     }
     
     // MARK: - Actions
     @objc private func dismissButtonTapped() {
+        print("👆 Dismiss button tapped")
         delegate?.introViewControllerDidRequestDismiss(self)
+    }
+    
+    @objc private func retryButtonTapped() {
+        print("🔄 Retry button tapped")
+        startLoading()
+        // Notify SDK to retry (you'll need to add this to the delegate)
+        // For now, just show loading state
     }
 }
