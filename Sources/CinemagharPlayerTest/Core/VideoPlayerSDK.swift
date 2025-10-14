@@ -163,7 +163,7 @@ extension VideoPlayerSDK: IntroViewControllerDelegate {
     func introViewControllerDidRequestDismiss(_ controller: IntroViewController) {
         print("📱 IntroViewController requested dismiss")
         print("   SDK self: \(Unmanaged.passUnretained(self).toOpaque())")
-        dismiss()
+        navigationController?.dismiss(animated: true)
     }
 }
 
@@ -171,7 +171,7 @@ extension VideoPlayerSDK: IntroViewControllerDelegate {
 extension VideoPlayerSDK: VideoPlayerViewControllerDelegate {
     func videoPlayerViewControllerDidRequestDismiss(_ controller: VideoPlayerViewController) {
         print("📱 VideoPlayerViewController requested dismiss")
-        dismiss()
+        navigationController?.dismiss(animated: true)
     }
     
     func videoPlayerViewController(_ controller: VideoPlayerViewController, didChangeState state: VideoPlayerState) {
