@@ -94,6 +94,6 @@ internal class VideoPlayerViewController: UIViewController {
     
     // MARK: - Actions
     @objc private func dismissButtonTapped() {
-        delegate?.videoPlayerViewControllerDidRequestDismiss(self)
     }
 }
+
