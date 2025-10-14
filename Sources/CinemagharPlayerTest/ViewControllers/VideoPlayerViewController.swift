@@ -11,17 +11,12 @@ import AVFoundation
 @MainActor
 protocol VideoPlayerViewControllerDelegate: AnyObject {
     func videoPlayerViewControllerDidRequestDismiss(_ controller: VideoPlayerViewController)
-    func videoPlayerViewController(_ controller: VideoPlayerViewController, didChangeState state: VideoPlayerState)
-    func videoPlayerViewController(_ controller: VideoPlayerViewController, didUpdateProgress currentTime: TimeInterval, totalTime: TimeInterval)
-    func videoPlayerViewController(_ controller: VideoPlayerViewController, didEncounterError error: VideoPlayerError)
-    func videoPlayerViewControllerDidFinishPlaying(_ controller: VideoPlayerViewController)
 }
 
 @MainActor
 internal class VideoPlayerViewController: UIViewController {
     
     // MARK: - Properties
-    weak var delegate: VideoPlayerViewControllerDelegate?
     private let videoURL: URL
     private let configuration: VideoPlayerConfiguration
     private let apiResponse: APIResponse
@@ -30,7 +25,6 @@ internal class VideoPlayerViewController: UIViewController {
     private(set) lazy var videoPlayerView: VideoPlayerView = {
         let playerView = VideoPlayerView()
         playerView.configuration = configuration
-        playerView.delegate = self
         return playerView
     }()
     
@@ -101,40 +95,5 @@ internal class VideoPlayerViewController: UIViewController {
     // MARK: - Actions
     @objc private func dismissButtonTapped() {
         delegate?.videoPlayerViewControllerDidRequestDismiss(self)
-    }
-}
-
-// MARK: - VideoPlayerDelegate
-extension VideoPlayerViewController: VideoPlayerDelegate {
-    func videoPlayerDidStartLoading(_ sdk: VideoPlayerSDK) {
-        // Not used in this context
-    }
-    
-    func videoPlayer(_ sdk: VideoPlayerSDK, didFailToLoadWithError error: VideoPlayerError) {
-        // Not used in this context
-    }
-    
-    func videoPlayer(_ sdk: VideoPlayerSDK, didReceiveVideoURL url: URL) {
-        // Not used in this context
-    }
-    
-    func videoPlayer(_ player: VideoPlayerView, didChangeState state: VideoPlayerState) {
-        delegate?.videoPlayerViewController(self, didChangeState: state)
-    }
-    
-    func videoPlayer(_ player: VideoPlayerView, didUpdateProgress currentTime: TimeInterval, totalTime: TimeInterval) {
-        delegate?.videoPlayerViewController(self, didUpdateProgress: currentTime, totalTime: totalTime)
-    }
-    
-    func videoPlayer(_ player: VideoPlayerView, didEncounterError error: VideoPlayerError) {
-        delegate?.videoPlayerViewController(self, didEncounterError: error)
-    }
-    
-    func videoPlayerDidFinishPlaying(_ player: VideoPlayerView) {
-        delegate?.videoPlayerViewControllerDidFinishPlaying(self)
-    }
-    
-    func videoPlayerDidDismiss(_ sdk: VideoPlayerSDK) {
-        // Not used in this context
     }
 }
