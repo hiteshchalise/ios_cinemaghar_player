@@ -56,6 +56,7 @@ public class VideoPlayerSDK {
         
         loadTask = Task {
             do {
+                print("----> Loading video data")
                 let response = try await APIManager().fetchVideoData(
                     userUniqueId: configuration.userUniqueId,
                     contentId: configuration.contentId,
@@ -63,6 +64,7 @@ public class VideoPlayerSDK {
                     deviceId: configuration.deviceId,
                     deviceName: configuration.deviceName
                 )
+                print("----> API call finished \(response)")
                 
                 // Check if task was cancelled
                 try Task.checkCancellation()
