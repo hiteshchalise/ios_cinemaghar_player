@@ -9,7 +9,7 @@
 import Foundation
 
 internal final class APIManager {
-    private let baseUrl = "https://stg.cinema-ghar.com/"
+    private let baseUrl = "https://stg.cinema-ghar.com"
     private let session: URLSession
 
     init(session: URLSession = .shared) {
