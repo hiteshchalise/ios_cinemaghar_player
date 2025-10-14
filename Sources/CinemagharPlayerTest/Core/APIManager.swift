@@ -105,7 +105,7 @@ internal final class APIManager {
         request.allHTTPHeaderFields = [
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "X-VERSION": "1.3",
+            "X-VERSION": "1.7",
             "X-DEVICE-TYPE": "setupbox",
             "X-DEVICE-ID": deviceId,
             "X-DEVICE-MODEL": deviceName,
