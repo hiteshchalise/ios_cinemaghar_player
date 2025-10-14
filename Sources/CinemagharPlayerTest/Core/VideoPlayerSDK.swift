@@ -44,14 +44,25 @@ public class VideoPlayerSDK {
     
     public func dismiss(animated: Bool = true) {
         print("🚪 Dismissing VideoPlayerSDK")
+        print("   navigationController: \(navigationController != nil)")
+        print("   presentingViewController: \(navigationController?.presentingViewController != nil)")
         
         // Cancel ongoing API task
         cancelLoad()
         
-        navigationController?.dismiss(animated: animated) { [weak self] in
-            guard let self = self else { return }
-            print("✅ VideoPlayerSDK dismissed")
-            self.delegate?.videoPlayerDidDismiss(self)
+        // Dismiss from the presenting view controller
+        if let navController = navigationController {
+            navController.dismiss(animated: animated) { [weak self] in
+                guard let self = self else { return }
+                print("✅ VideoPlayerSDK dismissed")
+                self.delegate?.videoPlayerDidDismiss(self)
+                
+                // Clean up references
+                self.navigationController = nil
+                self.introViewController = nil
+            }
+        } else {
+            print("⚠️ navigationController is nil, cannot dismiss")
         }
     }
     
@@ -150,6 +161,8 @@ public class VideoPlayerSDK {
 // MARK: - IntroViewControllerDelegate
 extension VideoPlayerSDK: IntroViewControllerDelegate {
     func introViewControllerDidRequestDismiss(_ controller: IntroViewController) {
+        print("📱 IntroViewController requested dismiss")
+        print("   SDK self: \(Unmanaged.passUnretained(self).toOpaque())")
         dismiss()
     }
 }
@@ -157,7 +170,7 @@ extension VideoPlayerSDK: IntroViewControllerDelegate {
 // MARK: - VideoPlayerViewControllerDelegate
 extension VideoPlayerSDK: VideoPlayerViewControllerDelegate {
     func videoPlayerViewControllerDidRequestDismiss(_ controller: VideoPlayerViewController) {
-        print("📱 IntroViewController requested dismiss")
+        print("📱 VideoPlayerViewController requested dismiss")
         dismiss()
     }
     
