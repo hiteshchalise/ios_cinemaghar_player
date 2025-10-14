@@ -151,7 +151,22 @@ internal class IntroViewController: UIViewController {
     // MARK: - Actions
     @objc private func dismissButtonTapped() {
         print("👆 Dismiss button tapped")
+        print("   Delegate: \(delegate != nil)")
+        print("   NavigationController: \(navigationController != nil)")
+        print("   PresentingViewController: \(presentingViewController != nil)")
+        
+        // Notify delegate first (for cleanup)
         delegate?.introViewControllerDidRequestDismiss(self)
+        
+        // Dismiss the navigationController that's presenting this VC
+        // Use presentingViewController to dismiss from the presenter's side
+        if let navController = navigationController {
+            navController.dismiss(animated: true, completion: nil)
+        } else if let presenter = presentingViewController {
+            presenter.dismiss(animated: true, completion: nil)
+        } else {
+            print("⚠️ Cannot find presenting view controller")
+        }
     }
     
     @objc private func retryButtonTapped() {

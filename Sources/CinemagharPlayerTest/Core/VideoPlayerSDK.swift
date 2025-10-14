@@ -45,24 +45,24 @@ public class VideoPlayerSDK {
     public func dismiss(animated: Bool = true) {
         print("🚪 Dismissing VideoPlayerSDK")
         print("   navigationController: \(navigationController != nil)")
-        print("   presentingViewController: \(navigationController?.presentingViewController != nil)")
-        
+        print(
+            "   navigationController.presentingViewController: \(navigationController?.presentingViewController != nil)"
+        )
+            
         // Cancel ongoing API task
         cancelLoad()
-        
-        // Dismiss from the presenting view controller
-        if let navController = navigationController {
-            navController.dismiss(animated: animated) { [weak self] in
-                guard let self = self else { return }
-                print("✅ VideoPlayerSDK dismissed")
-                self.delegate?.videoPlayerDidDismiss(self)
+            
+        // The navigationController is what was presented, so we dismiss it
+        // We need to call dismiss on the navigationController itself
+        // because it was presented modally
+        navigationController?.dismiss(animated: animated) { [weak self] in
+            guard let self = self else { return }
+            print("✅ VideoPlayerSDK dismissed")
+            self.delegate?.videoPlayerDidDismiss(self)
                 
-                // Clean up references
-                self.navigationController = nil
-                self.introViewController = nil
-            }
-        } else {
-            print("⚠️ navigationController is nil, cannot dismiss")
+            // Clean up references
+            self.navigationController = nil
+            self.introViewController = nil
         }
     }
     
@@ -163,7 +163,7 @@ extension VideoPlayerSDK: IntroViewControllerDelegate {
     func introViewControllerDidRequestDismiss(_ controller: IntroViewController) {
         print("📱 IntroViewController requested dismiss")
         print("   SDK self: \(Unmanaged.passUnretained(self).toOpaque())")
-        navigationController?.dismiss(animated: true)
+        dismiss()
     }
 }
 
@@ -171,7 +171,7 @@ extension VideoPlayerSDK: IntroViewControllerDelegate {
 extension VideoPlayerSDK: VideoPlayerViewControllerDelegate {
     func videoPlayerViewControllerDidRequestDismiss(_ controller: VideoPlayerViewController) {
         print("📱 VideoPlayerViewController requested dismiss")
-        navigationController?.dismiss(animated: true)
+        dismiss()
     }
     
     func videoPlayerViewController(_ controller: VideoPlayerViewController, didChangeState state: VideoPlayerState) {
