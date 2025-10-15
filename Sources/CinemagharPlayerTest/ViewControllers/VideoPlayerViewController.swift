@@ -6,12 +6,8 @@
 //
 
 import UIKit
+import AVKit
 import AVFoundation
-
-@MainActor
-protocol VideoPlayerViewControllerDelegate: AnyObject {
-    func videoPlayerViewControllerDidRequestDismiss(_ controller: VideoPlayerViewController)
-}
 
 @MainActor
 internal class VideoPlayerViewController: UIViewController {
@@ -21,24 +17,8 @@ internal class VideoPlayerViewController: UIViewController {
     private let configuration: VideoPlayerConfiguration
     private let apiResponse: APIResponse
     
-    // MARK: - UI Components
-    private(set) lazy var videoPlayerView: VideoPlayerView = {
-        let playerView = VideoPlayerView()
-        playerView.configuration = configuration
-        return playerView
-    }()
-    
-    private lazy var dismissButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("✕", for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 24)
-        button.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-        button.layer.cornerRadius = 22
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.addTarget(self, action: #selector(dismissButtonTapped), for: .touchUpInside)
-        return button
-    }()
+    private var playerViewController: AVPlayerViewController!
+    private var player: AVPlayer!
     
     // MARK: - Initialization
     init(videoURL: URL, configuration: VideoPlayerConfiguration, apiResponse: APIResponse) {
@@ -55,45 +35,126 @@ internal class VideoPlayerViewController: UIViewController {
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupUI()
-        loadAndPlayVideo()
+        setupPlayer()
+        setupPlayerViewController()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        // Lock to landscape when view appears
+        lockOrientation(.landscape)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        videoPlayerView.pause()
+        player?.pause()
+        // Unlock orientation when leaving
+        unlockOrientation()
     }
     
     // MARK: - Setup
-    private func setupUI() {
-        view.backgroundColor = configuration.backgroundColor
-        
-        // Add video player view
-        view.addSubview(videoPlayerView)
-        videoPlayerView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            videoPlayerView.topAnchor.constraint(equalTo: view.topAnchor),
-            videoPlayerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            videoPlayerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            videoPlayerView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
-        
-        // Add dismiss button
-        view.addSubview(dismissButton)
-        NSLayoutConstraint.activate([
-            dismissButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            dismissButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            dismissButton.widthAnchor.constraint(equalToConstant: 44),
-            dismissButton.heightAnchor.constraint(equalToConstant: 44)
-        ])
+    private func setupPlayer() {
+        let playerItem = AVPlayerItem(url: videoURL)
+        player = AVPlayer(playerItem: playerItem)
     }
     
-    private func loadAndPlayVideo() {
-        videoPlayerView.loadVideo(from: videoURL)
+    private func setupPlayerViewController() {
+        playerViewController = AVPlayerViewController()
+        playerViewController.player = player
+        playerViewController.showsPlaybackControls = true
+        playerViewController.allowsPictureInPicturePlayback = true
+        
+        // Add player view controller as child
+        addChild(playerViewController)
+        view.addSubview(playerViewController.view)
+        playerViewController.view.frame = view.bounds
+        playerViewController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        playerViewController.didMove(toParent: self)
+        
+        // Add custom back button
+        setupBackButton()
+        
+        // Auto-play if configured
+        if configuration.autoPlay {
+            player.play()
+        }
+    }
+    
+    private func setupBackButton() {
+        let backButton = UIButton(type: .system)
+        backButton.setTitle("✕", for: .normal)
+        backButton.setTitleColor(.white, for: .normal)
+        backButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .medium)
+        backButton.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        backButton.layer.cornerRadius = 22
+        backButton.translatesAutoresizingMaskIntoConstraints = false
+        backButton.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
+        
+        // Add to the player view controller's content overlay view
+        if let overlayView = playerViewController.contentOverlayView {
+            overlayView.addSubview(backButton)
+            NSLayoutConstraint.activate([
+                backButton.topAnchor.constraint(equalTo: overlayView.safeAreaLayoutGuide.topAnchor, constant: 16),
+                backButton.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
+                backButton.widthAnchor.constraint(equalToConstant: 44),
+                backButton.heightAnchor.constraint(equalToConstant: 44)
+            ])
+        }
+    }
+    
+    // MARK: - Orientation Control
+    private func lockOrientation(_ orientation: UIInterfaceOrientationMask) {
+        if #available(iOS 16.0, *) {
+            if let windowScene = view.window?.windowScene {
+                windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: orientation))
+            }
+        } else {
+            // For iOS 15 and below
+            if let orientationValue = orientationToInterfaceOrientation(orientation) {
+                UIDevice.current.setValue(orientationValue.rawValue, forKey: "orientation")
+                UIViewController.attemptRotationToDeviceOrientation()
+            }
+        }
+    }
+    
+    private func unlockOrientation() {
+        if #available(iOS 16.0, *) {
+            if let windowScene = view.window?.windowScene {
+                windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .all))
+            }
+        }
+        // For iOS 15 and below, the orientation is controlled by supportedInterfaceOrientations
+        // which gets reset when the VC is dismissed
+    }
+    
+    private func orientationToInterfaceOrientation(_ mask: UIInterfaceOrientationMask) -> UIInterfaceOrientation? {
+        switch mask {
+        case .portrait: return .portrait
+        case .landscapeLeft: return .landscapeLeft
+        case .landscapeRight, .landscape: return .landscapeRight
+        case .portraitUpsideDown: return .portraitUpsideDown
+        default: return nil
+        }
+    }
+    
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .landscape
+    }
+    
+    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+        return .landscapeRight
     }
     
     // MARK: - Actions
-    @objc private func dismissButtonTapped() {
+    @objc private func backButtonTapped() {
+        player?.pause()
+        dismiss(animated: true)
+    }
+    
+    deinit {
+        MainActor.assumeIsolated {
+            player?.pause()
+            unlockOrientation()
+        }
     }
 }
-

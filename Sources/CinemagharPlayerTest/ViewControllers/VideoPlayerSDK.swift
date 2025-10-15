@@ -84,20 +84,25 @@ public class VideoPlayerSDK: UIViewController {
             configuration: configuration,
             apiResponse: response
         )
-        
-        if let nav = navigationController {
-            nav.pushViewController(playerVC, animated: true)
+
+        // Present the player in full screen
+        playerVC.modalPresentationStyle = .fullScreen
+
+        // Dismiss self first, then present the player from the host context
+        if let presentingVC = presentingViewController {
+            dismiss(animated: false) {
+                presentingVC.present(playerVC, animated: true)
+            }
+        } else if let nav = navigationController {
+            // If inside navigation stack, replace current VC
+            var viewControllers = nav.viewControllers
+            viewControllers.removeLast()
+            viewControllers.append(playerVC)
+            nav.setViewControllers(viewControllers, animated: true)
         } else {
-            playerVC.modalPresentationStyle = .fullScreen
+            // Fallback (rare): just present normally
             present(playerVC, animated: true)
         }
     }
-}
 
-// MARK: - VideoPlayerViewControllerDelegate
-extension VideoPlayerSDK: VideoPlayerViewControllerDelegate {
-    func videoPlayerViewControllerDidRequestDismiss(_ controller: VideoPlayerViewController) {
-        print("📱 VideoPlayerViewController requested dismiss")
-        handleDismiss()
-    }
 }
