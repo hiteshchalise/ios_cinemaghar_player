@@ -21,6 +21,7 @@ internal class VideoPlayerViewController: UIViewController {
     private var player: AVPlayer!
     private var watermarkLabel: UILabel!
     private var watermarkTimer: Timer?
+    private var castButton: UIButton!
     
     // MARK: - Initialization
     init(videoURL: URL, configuration: VideoPlayerConfiguration, apiResponse: APIResponse) {
@@ -39,6 +40,7 @@ internal class VideoPlayerViewController: UIViewController {
         super.viewDidLoad()
         setupPlayer()
         setupPlayerViewController()
+        setupCustomCastButton()
         setupWatermark()
     }
     
@@ -67,7 +69,14 @@ internal class VideoPlayerViewController: UIViewController {
         playerViewController = AVPlayerViewController()
         playerViewController.player = player
         playerViewController.showsPlaybackControls = true
-        playerViewController.allowsPictureInPicturePlayback = true
+        
+        // Disable AirPlay and Picture-in-Picture
+        playerViewController.allowsPictureInPicturePlayback = false
+        
+        // Disable the default AirPlay button (iOS 11+)
+        if #available(iOS 11.0, *) {
+            playerViewController.exitsFullScreenWhenPlaybackEnds = true
+        }
         
         // Add player view controller as child
         addChild(playerViewController)
@@ -80,6 +89,107 @@ internal class VideoPlayerViewController: UIViewController {
         if configuration.autoPlay {
             player.play()
         }
+    }
+    
+    private func setupCustomCastButton() {
+        castButton = UIButton(type: .system)
+        
+        // Use SF Symbol for cast icon (available iOS 13+)
+        if #available(iOS 13.0, *) {
+            let castImage = UIImage(systemName: "airplayvideo")
+            castButton.setImage(castImage, for: .normal)
+        } else {
+            // Fallback for older iOS versions - you can add a custom cast image to your assets
+            castButton.setTitle("Cast", for: .normal)
+        }
+        
+        castButton.tintColor = .white
+        castButton.translatesAutoresizingMaskIntoConstraints = false
+        castButton.addTarget(self, action: #selector(castButtonTapped), for: .touchUpInside)
+        
+        // Add button to the content overlay view
+        if let overlayView = playerViewController.contentOverlayView {
+            overlayView.addSubview(castButton)
+            
+            // Position the button in the top-right corner (like AirPlay typically appears)
+            NSLayoutConstraint.activate([
+                castButton.topAnchor.constraint(equalTo: overlayView.safeAreaLayoutGuide.topAnchor, constant: 16),
+                castButton.trailingAnchor.constraint(equalTo: overlayView.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+                castButton.widthAnchor.constraint(equalToConstant: 44),
+                castButton.heightAnchor.constraint(equalToConstant: 44)
+            ])
+            
+            // Optional: Add a semi-transparent background for better visibility
+            castButton.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+            castButton.layer.cornerRadius = 8
+        }
+    }
+    
+    @objc private func castButtonTapped() {
+        // Implement your custom cast logic here
+        print("Cast button tapped")
+        
+        // Example: Show a cast device picker
+        showCastDevicePicker()
+        
+        // Or handle Google Cast, Chromecast, or any other casting service
+        // initiateCasting()
+    }
+    
+    private func showCastDevicePicker() {
+        // This is where you'd implement your casting logic
+        // For example, showing a list of available cast devices
+        
+        let alert = UIAlertController(
+            title: "Cast to Device",
+            message: "Select a device to cast to",
+            preferredStyle: .actionSheet
+        )
+        
+        // Add your cast devices here
+        alert.addAction(UIAlertAction(title: "Living Room TV", style: .default) { _ in
+            self.startCasting(to: "Living Room TV")
+        })
+        
+        alert.addAction(UIAlertAction(title: "Bedroom TV", style: .default) { _ in
+            self.startCasting(to: "Bedroom TV")
+        })
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        // For iPad
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = castButton
+            popover.sourceRect = castButton.bounds
+        }
+        
+        present(alert, animated: true)
+    }
+    
+    private func startCasting(to device: String) {
+        print("Starting cast to: \(device)")
+        
+        // Implement your casting logic here
+        // This might involve:
+        // 1. Pausing local playback
+        // 2. Sending video URL to cast device
+        // 3. Showing casting controls
+        // 4. Monitoring cast status
+        
+        // Example for Google Cast SDK:
+        // GCKCastContext.sharedInstance().sessionManager.startSession(with: device)
+        
+        // Update button appearance to show active casting
+        updateCastButtonForActiveSession()
+    }
+    
+    private func updateCastButtonForActiveSession() {
+        // Update the button to show casting is active
+        if #available(iOS 13.0, *) {
+            let connectedImage = UIImage(systemName: "airplayvideo.circle.fill")
+            castButton.setImage(connectedImage, for: .normal)
+        }
+        castButton.tintColor = .systemBlue
     }
     
     private func setupWatermark() {
