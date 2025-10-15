@@ -44,6 +44,7 @@ public class VideoPlayerSDK: UIViewController {
                 self?.handleDismiss()
             },
             onSuccess: { [weak self] videoURL, response in
+                print("Handling Success")
                 self?.handleSuccess(videoURL: videoURL, response: response)
             }
         )

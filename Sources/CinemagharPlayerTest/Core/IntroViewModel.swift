@@ -50,6 +50,7 @@ class IntroViewModel: ObservableObject {
                 print("Video load was cancelled")
             } catch {
                 // Dummy
+                print("Calling Success Dummy")
                 onSuccess?(
                     URL(string: "https://cinevideos.b-cdn.net/videos/thekingsman/thekingsman.m3u8")!,
                     APIResponse(
