@@ -5,16 +5,22 @@
 //  Created by Hitesh Chalise on 14/10/2025.
 //
 import SwiftUI
+import Combine
 
+// MARK: - Events
+enum IntroViewModelEvent {
+    case success(videoURL: URL, response: APIResponse)
+    case error(VideoPlayerError)
+}
 
 @MainActor
 class IntroViewModel: ObservableObject {
     @Published var loadingState: LoadingState = .loading
     
+    let eventPublisher = PassthroughSubject<IntroViewModelEvent, Never>()
+    
     private let configuration: VideoPlayerConfiguration
     private var loadTask: Task<Void, Never>?
-    
-    var onSuccess: ((URL, APIResponse) -> Void)?
     
     init(configuration: VideoPlayerConfiguration) {
         self.configuration = configuration
@@ -40,26 +46,30 @@ class IntroViewModel: ObservableObject {
                 
                 guard let videoURLString = response.isBoughtData?.videoUrl,
                       let videoURL = URL(string: videoURLString) else {
-                    loadingState = .error(.invalidResponseData)
+                    let error = VideoPlayerError.invalidResponseData
+                    loadingState = .error(error)
+                    eventPublisher.send(.error(error))
                     return
                 }
                 
                 print("✅ Video loaded successfully")
-                onSuccess?(videoURL, response)
+                eventPublisher.send(.success(videoURL: videoURL, response: response))
             } catch is CancellationError {
                 print("Video load was cancelled")
             } catch {
                 // Dummy
                 print("Calling Success Dummy")
-                onSuccess?(
-                    URL(string: "https://cinevideos.b-cdn.net/videos/thekingsman/thekingsman.m3u8")!,
-                    APIResponse(
-                        status: true,
-                        message: "Payment Record Verified",
-                        isBoughtData: IsBoughtData(videoUrl: "https://cinevideos.b-cdn.net/videos/thekingsman/thekingsman.m3u8")
-                    )
+                let dummyURL = URL(string: "https://cinevideos.b-cdn.net/videos/thekingsman/thekingsman.m3u8")!
+                let dummyResponse = APIResponse(
+                    status: true,
+                    message: "Payment Record Verified",
+                    isBoughtData: IsBoughtData(videoUrl: "https://cinevideos.b-cdn.net/videos/thekingsman/thekingsman.m3u8")
                 )
-//                loadingState = .error(convertError(error))
+                eventPublisher.send(.success(videoURL: dummyURL, response: dummyResponse))
+                
+//                let convertedError = convertError(error)
+//                loadingState = .error(convertedError)
+//                eventPublisher.send(.error(convertedError))
             }
         }
     }

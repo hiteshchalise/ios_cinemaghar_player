@@ -10,6 +10,7 @@ import SwiftUI
 struct IntroView: View {
     @StateObject private var viewModel: IntroViewModel
     let onDismiss: () -> Void
+    let onSuccess: (URL, APIResponse) -> Void
     
     init(
         configuration: VideoPlayerConfiguration,
@@ -18,7 +19,7 @@ struct IntroView: View {
     ) {
         self._viewModel = StateObject(wrappedValue: IntroViewModel(configuration: configuration))
         self.onDismiss = onDismiss
-        self.viewModel.onSuccess = onSuccess
+        self.onSuccess = onSuccess
     }
     
     var body: some View {
@@ -55,6 +56,21 @@ struct IntroView: View {
         }
         .onDisappear {
             viewModel.cancelLoad()
+        }
+        .onReceive(viewModel.eventPublisher) { event in
+            handleViewModelEvent(event)
+        }
+    }
+    
+    // MARK: - Event Handler
+    private func handleViewModelEvent(_ event: IntroViewModelEvent) {
+        switch event {
+        case .success(let videoURL, let response):
+            print("handling success from viewmodel event")
+            onSuccess(videoURL, response)
+        case .error(let error):
+            // Handle error event if needed
+            print("❌ Error event received: \(error)")
         }
     }
     
