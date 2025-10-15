@@ -25,29 +25,30 @@ class IntroViewModel: ObservableObject {
         loadingState = .loading
         
         loadTask = Task {
-//            do {
-//                print("----> Loading video data")
-//                let response = try await APIManager().fetchVideoData(
-//                    userUniqueId: configuration.userUniqueId,
-//                    contentId: configuration.contentId,
-//                    authToken: configuration.authToken,
-//                    deviceId: configuration.deviceId,
-//                    deviceName: configuration.deviceName
-//                )
-//                print("----> API call finished \(response)")
-//                
-//                try Task.checkCancellation()
-//                
-//                guard let videoURLString = response.isBoughtData?.videoUrl,
-//                      let videoURL = URL(string: videoURLString) else {
-//                    loadingState = .error(.invalidResponseData)
-//                    return
-//                }
-//                
-//                print("✅ Video loaded successfully")
-//                onSuccess?(videoURL, response)
+            do {
+                print("----> Loading video data")
+                let response = try await APIManager().fetchVideoData(
+                    userUniqueId: configuration.userUniqueId,
+                    contentId: configuration.contentId,
+                    authToken: configuration.authToken,
+                    deviceId: configuration.deviceId,
+                    deviceName: configuration.deviceName
+                )
+                print("----> API call finished \(response)")
                 
+                try Task.checkCancellation()
                 
+                guard let videoURLString = response.isBoughtData?.videoUrl,
+                      let videoURL = URL(string: videoURLString) else {
+                    loadingState = .error(.invalidResponseData)
+                    return
+                }
+                
+                print("✅ Video loaded successfully")
+                onSuccess?(videoURL, response)
+            } catch is CancellationError {
+                print("Video load was cancelled")
+            } catch {
                 // Dummy
                 onSuccess?(
                     URL(string: "https://cinevideos.b-cdn.net/videos/thekingsman/thekingsman.m3u8")!,
@@ -57,11 +58,8 @@ class IntroViewModel: ObservableObject {
                         isBoughtData: IsBoughtData(videoUrl: "https://cinevideos.b-cdn.net/videos/thekingsman/thekingsman.m3u8")
                     )
                 )
-//            } catch is CancellationError {
-//                print("Video load was cancelled")
-//            } catch {
 //                loadingState = .error(convertError(error))
-//            }
+            }
         }
     }
     
