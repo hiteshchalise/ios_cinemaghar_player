@@ -40,7 +40,6 @@ internal class VideoPlayerViewController: UIViewController {
         setupPlayer()
         setupPlayerViewController()
         setupWatermark()
-        setupCastButton()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -77,34 +76,9 @@ internal class VideoPlayerViewController: UIViewController {
         playerViewController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         playerViewController.didMove(toParent: self)
         
-        // Add custom back button
-        setupBackButton()
-        
         // Auto-play if configured
         if configuration.autoPlay {
             player.play()
-        }
-    }
-    
-    private func setupBackButton() {
-        let backButton = UIButton(type: .system)
-        backButton.setTitle("✕", for: .normal)
-        backButton.setTitleColor(.white, for: .normal)
-        backButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .medium)
-        backButton.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-        backButton.layer.cornerRadius = 22
-        backButton.translatesAutoresizingMaskIntoConstraints = false
-        backButton.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
-        
-        // Add to the player view controller's content overlay view
-        if let overlayView = playerViewController.contentOverlayView {
-            overlayView.addSubview(backButton)
-            NSLayoutConstraint.activate([
-                backButton.topAnchor.constraint(equalTo: overlayView.safeAreaLayoutGuide.topAnchor, constant: 16),
-                backButton.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
-                backButton.widthAnchor.constraint(equalToConstant: 44),
-                backButton.heightAnchor.constraint(equalToConstant: 44)
-            ])
         }
     }
     
@@ -154,31 +128,14 @@ internal class VideoPlayerViewController: UIViewController {
         let randomX = CGFloat.random(in: margin...max(margin, maxX))
         let randomY = CGFloat.random(in: margin...max(margin, maxY))
         
-        // Animate to new position
-        UIView.animate(withDuration: 0.5) {
+        // Subtle fade out, move, then fade in
+        UIView.animate(withDuration: 0.3, animations: {
+            self.watermarkLabel.alpha = 0
+        }) { _ in
             self.watermarkLabel.frame = CGRect(x: randomX, y: randomY, width: labelWidth, height: labelHeight)
-        }
-    }
-    
-    private func setupCastButton() {
-        // Create cast button
-        let castButton = UIButton(type: .system)
-        castButton.setImage(UIImage(systemName: "airplayvideo"), for: .normal)
-        castButton.tintColor = .white
-        castButton.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-        castButton.layer.cornerRadius = 22
-        castButton.translatesAutoresizingMaskIntoConstraints = false
-        castButton.addTarget(self, action: #selector(castButtonTapped), for: .touchUpInside)
-        
-        // Add to the player view controller's content overlay view
-        if let overlayView = playerViewController.contentOverlayView {
-            overlayView.addSubview(castButton)
-            NSLayoutConstraint.activate([
-                castButton.topAnchor.constraint(equalTo: overlayView.safeAreaLayoutGuide.topAnchor, constant: 16),
-                castButton.trailingAnchor.constraint(equalTo: overlayView.trailingAnchor, constant: -16),
-                castButton.widthAnchor.constraint(equalToConstant: 44),
-                castButton.heightAnchor.constraint(equalToConstant: 44)
-            ])
+            UIView.animate(withDuration: 0.3) {
+                self.watermarkLabel.alpha = 0.4
+            }
         }
     }
     
@@ -226,21 +183,9 @@ internal class VideoPlayerViewController: UIViewController {
     }
     
     // MARK: - Actions
-    @objc private func backButtonTapped() {
-        player?.pause()
-        dismiss(animated: true)
-    }
-    
-    @objc private func castButtonTapped() {
-        // TODO: Add your casting logic here
-        // Example: Initialize Google Cast or AirPlay picker
-        
-        // For native AirPlay, you can use:
-        // let routePickerView = AVRoutePickerView()
-        // routePickerView.showRoutePickerButton(from: castButton, animated: true)
-        
-        print("Cast button tapped - implement your casting logic here")
-    }
+    // The native AVPlayerViewController handles the Done button and AirPlay automatically
+    // To handle the Done button dismiss action, the presenting view controller
+    // can set itself as the delegate or use modal presentation callbacks
     
     deinit {
         MainActor.assumeIsolated {
