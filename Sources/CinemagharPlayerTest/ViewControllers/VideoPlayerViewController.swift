@@ -19,6 +19,8 @@ internal class VideoPlayerViewController: UIViewController {
     
     private var playerViewController: AVPlayerViewController!
     private var player: AVPlayer!
+    private var watermarkLabel: UILabel!
+    private var watermarkTimer: Timer?
     
     // MARK: - Initialization
     init(videoURL: URL, configuration: VideoPlayerConfiguration, apiResponse: APIResponse) {
@@ -37,6 +39,8 @@ internal class VideoPlayerViewController: UIViewController {
         super.viewDidLoad()
         setupPlayer()
         setupPlayerViewController()
+        setupWatermark()
+        setupCastButton()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -48,6 +52,8 @@ internal class VideoPlayerViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         player?.pause()
+        watermarkTimer?.invalidate()
+        watermarkTimer = nil
         // Unlock orientation when leaving
         unlockOrientation()
     }
@@ -102,6 +108,80 @@ internal class VideoPlayerViewController: UIViewController {
         }
     }
     
+    private func setupWatermark() {
+        guard !configuration.userUniqueId.isEmpty else { return }
+        
+        watermarkLabel = UILabel()
+        watermarkLabel.text = configuration.userUniqueId
+        watermarkLabel.textColor = UIColor.white.withAlphaComponent(0.4)
+        watermarkLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        watermarkLabel.sizeToFit()
+        watermarkLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        if let overlayView = playerViewController.contentOverlayView {
+            overlayView.addSubview(watermarkLabel)
+            
+            // Position randomly and start timer
+            positionWatermarkRandomly()
+            
+            // Change position every 14 seconds
+            watermarkTimer = Timer.scheduledTimer(withTimeInterval: 14.0, repeats: true) { [weak self] _ in
+                Task { @MainActor in
+                    self?.positionWatermarkRandomly()
+                }
+            }
+        }
+    }
+    
+    private func positionWatermarkRandomly() {
+        guard let overlayView = playerViewController.contentOverlayView else { return }
+        
+        // Remove previous constraints
+        watermarkLabel.removeConstraints(watermarkLabel.constraints)
+        NSLayoutConstraint.deactivate(overlayView.constraints.filter { constraint in
+            constraint.firstItem as? UILabel == watermarkLabel ||
+            constraint.secondItem as? UILabel == watermarkLabel
+        })
+        
+        let labelWidth = watermarkLabel.intrinsicContentSize.width
+        let labelHeight = watermarkLabel.intrinsicContentSize.height
+        
+        // Generate random position with safe margins
+        let margin: CGFloat = 50
+        let maxX = overlayView.bounds.width - labelWidth - margin
+        let maxY = overlayView.bounds.height - labelHeight - margin
+        
+        let randomX = CGFloat.random(in: margin...max(margin, maxX))
+        let randomY = CGFloat.random(in: margin...max(margin, maxY))
+        
+        // Animate to new position
+        UIView.animate(withDuration: 0.5) {
+            self.watermarkLabel.frame = CGRect(x: randomX, y: randomY, width: labelWidth, height: labelHeight)
+        }
+    }
+    
+    private func setupCastButton() {
+        // Create cast button
+        let castButton = UIButton(type: .system)
+        castButton.setImage(UIImage(systemName: "airplayvideo"), for: .normal)
+        castButton.tintColor = .white
+        castButton.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        castButton.layer.cornerRadius = 22
+        castButton.translatesAutoresizingMaskIntoConstraints = false
+        castButton.addTarget(self, action: #selector(castButtonTapped), for: .touchUpInside)
+        
+        // Add to the player view controller's content overlay view
+        if let overlayView = playerViewController.contentOverlayView {
+            overlayView.addSubview(castButton)
+            NSLayoutConstraint.activate([
+                castButton.topAnchor.constraint(equalTo: overlayView.safeAreaLayoutGuide.topAnchor, constant: 16),
+                castButton.trailingAnchor.constraint(equalTo: overlayView.trailingAnchor, constant: -16),
+                castButton.widthAnchor.constraint(equalToConstant: 44),
+                castButton.heightAnchor.constraint(equalToConstant: 44)
+            ])
+        }
+    }
+    
     // MARK: - Orientation Control
     private func lockOrientation(_ orientation: UIInterfaceOrientationMask) {
         if #available(iOS 16.0, *) {
@@ -151,8 +231,21 @@ internal class VideoPlayerViewController: UIViewController {
         dismiss(animated: true)
     }
     
+    @objc private func castButtonTapped() {
+        // TODO: Add your casting logic here
+        // Example: Initialize Google Cast or AirPlay picker
+        
+        // For native AirPlay, you can use:
+        // let routePickerView = AVRoutePickerView()
+        // routePickerView.showRoutePickerButton(from: castButton, animated: true)
+        
+        print("Cast button tapped - implement your casting logic here")
+    }
+    
     deinit {
         MainActor.assumeIsolated {
+            watermarkTimer?.invalidate()
+            watermarkTimer = nil
             player?.pause()
             unlockOrientation()
         }
