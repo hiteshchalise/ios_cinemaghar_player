@@ -145,7 +145,7 @@ struct CastDialogView: View {
     
     var body: some View {
         ZStack {
-            Color.gray
+            Color.black.opacity(0.3)
                 .ignoresSafeArea()
                 .onTapGesture {
                     presentationMode.wrappedValue.dismiss()
@@ -202,7 +202,6 @@ struct CastDialogView: View {
                 }
             }
             .frame(width: 400, height: 300)
-            .background(.gray)
             .cornerRadius(10)
             .shadow(radius: 10)
         }
