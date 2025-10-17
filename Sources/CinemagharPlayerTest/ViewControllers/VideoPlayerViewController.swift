@@ -576,13 +576,9 @@ internal class VideoPlayerViewController: UIViewController {
         })
         
         dialogVC.overrideUserInterfaceStyle = .dark
-        
-        // Configure sheet presentation
-        if let sheet = dialogVC.sheetPresentationController {
-            sheet.detents = [.medium()]  // or .custom for specific height
-            sheet.prefersGrabberVisible = true
-            sheet.preferredCornerRadius = 10
-        }
+        dialogVC.modalPresentationStyle = .overFullScreen
+        dialogVC.modalTransitionStyle = .crossDissolve
+        dialogVC.view.backgroundColor = UIColor.black.withAlphaComponent(0.3)
         
         present(dialogVC, animated: true)
     }
