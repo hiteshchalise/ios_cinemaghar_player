@@ -201,6 +201,8 @@ struct CastDialogView: View {
                     }
                 }
             }
+            .background(.gray)
+            .frame(width: 400, height: 300)
             .cornerRadius(10)
             .shadow(radius: 10)
         }
