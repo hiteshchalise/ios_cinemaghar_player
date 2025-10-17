@@ -8,6 +8,7 @@
 import UIKit
 import AVKit
 import AVFoundation
+import SwiftUI
 
 @MainActor
 internal class VideoPlayerViewController: UIViewController {
@@ -557,28 +558,33 @@ internal class VideoPlayerViewController: UIViewController {
     }
     
     private func showCastDevicePicker() {
-        let alert = UIAlertController(
-            title: "Cast to Device",
-            message: "Select a device to cast to",
-            preferredStyle: .actionSheet
-        )
-        
-        alert.addAction(UIAlertAction(title: "Living Room TV", style: .default) { _ in
-            self.startCasting(to: "Living Room TV")
+        let dialogVC = UIHostingController(rootView: CastDialogView(){ item in
+            let player = item.createVideoPlayer("Cinemaghar")
+            print("URL : ", self.videoURL)
+            player.playContent(
+                self.videoURL,
+                title: self.configuration.contentTitle,
+                thumbnailURL: URL(string: ""),
+                completionHandler: { error in
+                    if(error == nil) {
+                        self.dismiss(animated: true, completion: {
+                            self.backButtonTapped()
+                        })
+                    }
+                })
+            print("Playing content... \(item.name)")
         })
         
-        alert.addAction(UIAlertAction(title: "Bedroom TV", style: .default) { _ in
-            self.startCasting(to: "Bedroom TV")
-        })
+        dialogVC.overrideUserInterfaceStyle = .dark
         
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = castButton
-            popover.sourceRect = castButton.bounds
+        // Configure sheet presentation
+        if let sheet = dialogVC.sheetPresentationController {
+            sheet.detents = [.medium()]  // or .custom for specific height
+            sheet.prefersGrabberVisible = true
+            sheet.preferredCornerRadius = 10
         }
         
-        present(alert, animated: true)
+        present(dialogVC, animated: true)
     }
     
     private func startCasting(to device: String) {

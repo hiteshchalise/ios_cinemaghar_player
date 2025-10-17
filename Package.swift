@@ -16,12 +16,21 @@ let package = Package(
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
-        .target(
-            name: "CinemagharPlayerTest"
+        .binaryTarget(
+            name: "GoogleCast",
+            path: "Frameworks/GoogleCast.xcframework"
         ),
-        .testTarget(
-            name: "CinemagharPlayerTestTests",
-            dependencies: ["CinemagharPlayerTest"]
+        .binaryTarget(
+            name: "SmartView",
+            path: "Frameworks/SmartView.xcframework"
+        ),
+        .target(
+            name: "CinemagharPlayerTest",
+            dependencies: [
+                "GoogleCast",
+                "SmartView"
+            ],
+            path: "Sources/CinemagharPlayerTest"
         ),
     ]
 )
