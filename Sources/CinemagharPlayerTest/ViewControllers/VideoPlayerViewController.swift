@@ -577,7 +577,7 @@ internal class VideoPlayerViewController: UIViewController {
         
         dialogVC.modalPresentationStyle = .overFullScreen
         dialogVC.modalTransitionStyle = .crossDissolve
-        dialogVC.view.backgroundColor = .clear
+        dialogVC.view.backgroundColor = .black
         
         present(dialogVC, animated: true)
     }
