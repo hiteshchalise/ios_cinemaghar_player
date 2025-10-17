@@ -134,6 +134,7 @@ class CastViewModel: NSObject, ObservableObject, ServiceSearchDelegate, GCKDisco
 }
 
 struct CastDialogView: View {
+    @Environment(\.presentationMode) var presentationMode
     @StateObject var castViewModel: CastViewModel = CastViewModel()
     
     private var serviceTapHandler: (Service) -> ()
@@ -144,7 +145,12 @@ struct CastDialogView: View {
     
     var body: some View {
         ZStack {
-            Color.clear
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    presentationMode.wrappedValue.dismiss()
+                }
+            
             List {
                 HStack{
                     Text("Cast Devices").fontWeight(.bold)
@@ -195,8 +201,11 @@ struct CastDialogView: View {
                     }
                 }
             }
+            .frame(width: 400, height: 300)
+            .background(Color(.systemBackground))
+            .cornerRadius(10)
+            .shadow(radius: 10)
         }
-        .padding()
-        .frame(width: 400, height: 300)
+        .preferredColorScheme(.dark)
     }
 }
