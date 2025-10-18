@@ -80,7 +80,7 @@ internal class VideoPlayerViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        UIDevice.current.setValue(UIInterfaceOrientation.landscapeRight.rawValue, forKey: "orientation")
+//        UIDevice.current.setValue(UIInterfaceOrientation.landscapeRight.rawValue, forKey: "orientation")
 
         if configuration.autoPlay {
             player.play()
@@ -95,7 +95,7 @@ internal class VideoPlayerViewController: UIViewController {
         watermarkTimer = nil
         controlsTimer?.invalidate()
         controlsTimer = nil
-        UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
+//        UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
     }
     
     // MARK: - Setup Player
@@ -664,28 +664,28 @@ internal class VideoPlayerViewController: UIViewController {
 //        }
 //    }
 //    
-    private func orientationToInterfaceOrientation(_ mask: UIInterfaceOrientationMask) -> UIInterfaceOrientation? {
-        switch mask {
-        case .portrait: return .portrait
-        case .landscapeLeft: return .landscapeLeft
-        case .landscapeRight, .landscape: return .landscapeRight
-        case .portraitUpsideDown: return .portraitUpsideDown
-        default: return nil
-        }
-    }
+//    private func orientationToInterfaceOrientation(_ mask: UIInterfaceOrientationMask) -> UIInterfaceOrientation? {
+//        switch mask {
+//        case .portrait: return .portrait
+//        case .landscapeLeft: return .landscapeLeft
+//        case .landscapeRight, .landscape: return .landscapeRight
+//        case .portraitUpsideDown: return .portraitUpsideDown
+//        default: return nil
+//        }
+//    }
     
-    override var shouldAutorotate: Bool {
-        return true
-    }
-    
-    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        return .landscape
-    }
-    
-    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
-        return .landscapeRight
-    }
-    
+//    override var shouldAutorotate: Bool {
+//        return true
+//    }
+//    
+//    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+//        return .landscape
+//    }
+//    
+//    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+//        return .landscapeRight
+//    }
+//    
     deinit {
         MainActor.assumeIsolated {
             if let observer = timeObserver {
@@ -695,7 +695,7 @@ internal class VideoPlayerViewController: UIViewController {
             watermarkTimer?.invalidate()
             controlsTimer?.invalidate()
             player?.pause()
-            UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
+//            UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
         }
     }
 }
