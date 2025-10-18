@@ -79,8 +79,9 @@ internal class VideoPlayerViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        lockOrientation(.landscape)
-        
+
+        UIDevice.current.setValue(UIInterfaceOrientation.landscapeRight.rawValue, forKey: "orientation")
+
         if configuration.autoPlay {
             player.play()
             updatePlayPauseButton()
@@ -94,7 +95,7 @@ internal class VideoPlayerViewController: UIViewController {
         watermarkTimer = nil
         controlsTimer?.invalidate()
         controlsTimer = nil
-        unlockOrientation()
+        UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
     }
     
     // MARK: - Setup Player
@@ -641,28 +642,28 @@ internal class VideoPlayerViewController: UIViewController {
         }
     }
     
-    // MARK: - Orientation Control
-    private func lockOrientation(_ orientation: UIInterfaceOrientationMask) {
-        if #available(iOS 16.0, *) {
-            if let windowScene = view.window?.windowScene {
-                windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: orientation))
-            }
-        } else {
-            if let orientationValue = orientationToInterfaceOrientation(orientation) {
-                UIDevice.current.setValue(orientationValue.rawValue, forKey: "orientation")
-                UIViewController.attemptRotationToDeviceOrientation()
-            }
-        }
-    }
-    
-    private func unlockOrientation() {
-        if #available(iOS 16.0, *) {
-            if let windowScene = view.window?.windowScene {
-                windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .all))
-            }
-        }
-    }
-    
+//    // MARK: - Orientation Control
+//    private func lockOrientation(_ orientation: UIInterfaceOrientationMask) {
+//        if #available(iOS 16.0, *) {
+//            if let windowScene = view.window?.windowScene {
+//                windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: orientation))
+//            }
+//        } else {
+//            if let orientationValue = orientationToInterfaceOrientation(orientation) {
+//                UIDevice.current.setValue(orientationValue.rawValue, forKey: "orientation")
+//                UIViewController.attemptRotationToDeviceOrientation()
+//            }
+//        }
+//    }
+//    
+//    private func unlockOrientation() {
+//        if #available(iOS 16.0, *) {
+//            if let windowScene = view.window?.windowScene {
+//                windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .all))
+//            }
+//        }
+//    }
+//    
     private func orientationToInterfaceOrientation(_ mask: UIInterfaceOrientationMask) -> UIInterfaceOrientation? {
         switch mask {
         case .portrait: return .portrait
@@ -671,6 +672,10 @@ internal class VideoPlayerViewController: UIViewController {
         case .portraitUpsideDown: return .portraitUpsideDown
         default: return nil
         }
+    }
+    
+    override var shouldAutorotate: Bool {
+        return true
     }
     
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
@@ -690,7 +695,7 @@ internal class VideoPlayerViewController: UIViewController {
             watermarkTimer?.invalidate()
             controlsTimer?.invalidate()
             player?.pause()
-            unlockOrientation()
+            UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
         }
     }
 }
